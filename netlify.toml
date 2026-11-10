@@ -1,0 +1,3 @@
+# Used only by the old Netlify site: send every visitor to umania.app
+[build]
+  publish = "netlify-redirect"
