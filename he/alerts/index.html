@@ -455,14 +455,11 @@
     threatLayer.clearLayers();
     near.filter(n => !n.areaOnly).forEach(n => {
       const t = n.t, c = n.stale ? "#59627a" : MOVE[n.move].color;
-      if (n.heading != null) {
-        const end = destPoint(t.lat, t.lon, n.heading, 25);
-        L.polyline([[t.lat, t.lon], end], { color: c, weight: 2.5, opacity: .9, interactive: false }).addTo(threatLayer);
-        const tip1 = destPoint(end[0], end[1], n.heading + 150, 6), tip2 = destPoint(end[0], end[1], n.heading - 150, 6);
-        L.polyline([tip1, end, tip2], { color: c, weight: 2.5, opacity: .9, interactive: false }).addTo(threatLayer);
-      }
+      const size = t.count > 1 ? 26 : 22;
+      const rot = n.heading != null ? n.heading : 0;
+      const svg = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="transform:rotate(${rot}deg);filter:drop-shadow(0 0 2px #000)"><path d="M12 2c.8 0 1.4.7 1.4 1.5V9l7.6 4.4v2l-7.6-2.2v4.6l2.4 1.8V21L12 20l-3.8 1v-1.4l2.4-1.8v-4.6L3 15.4v-2L10.6 9V3.5C10.6 2.7 11.2 2 12 2z" fill="${c}" stroke="#0e1117" stroke-width="1"/></svg>`;
       const label = `${n.lab.he}${t.count > 1 ? " × " + t.count : ""} · ${Math.round(n.dist)} ק״מ`;
-      L.circleMarker([t.lat, t.lon], { radius: t.count > 1 ? 8 : 6.5, color: "#0e1117", weight: 1.5, fillColor: c, fillOpacity: 1 })
+      L.marker([t.lat, t.lon], { icon: L.divIcon({ className: "", html: svg, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }) })
         .bindTooltip(label, { direction: "top" }).addTo(threatLayer);
     });
   }
