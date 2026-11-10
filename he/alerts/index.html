@@ -412,8 +412,8 @@
 
   const CITIES = [
     ["קייב",50.45,30.52],["צ'רקסי",49.44,32.06],["ויניצה",49.23,28.47],["קרופיבניצקי",48.51,32.26],
-    ["ביילה צרקווה",49.80,30.12],["אודסה",46.48,30.73],["מיקולאייב",46.97,31.99],["ז'יטומיר",50.25,28.66],
-    ["קרמנצ'וק",49.07,33.42],["הייסין",48.81,29.39],["סמילה",49.22,31.88],["ז'שקיב",49.25,30.11],["טלנה",48.88,30.69]
+    ["ביילה צרקווה",49.80,30.12,1],["אודסה",46.48,30.73],["מיקולאייב",46.97,31.99],["ז'יטומיר",50.25,28.66],
+    ["קרמנצ'וק",49.07,33.42,1],["הייסין",48.81,29.39,1],["סמילה",49.22,31.88,1],["ז'שקיב",49.25,30.11,1],["טלנה",48.88,30.69,1],["זבניהורודקה",49.08,30.97,1],["כריסטינובקה",48.83,29.97,1]
   ];
   let map = null, threatLayer = null;
   function destPoint(lat, lon, brg, km) {
@@ -425,23 +425,28 @@
   function initMap() {
     if (map || !window.L) return;
     map = L.map("map", { zoomControl: true, attributionControl: true }).setView([UMAN.lat, UMAN.lon], 6);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png", {
-      subdomains: "abcd", maxZoom: 12,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/" target="_blank">CARTO</a>'
+    L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 15,
+      attribution: 'Tiles &copy; Esri'
     }).addTo(map);
     [50, 100, 200, 300].forEach(km => {
       L.circle([UMAN.lat, UMAN.lon], { radius: km * 1000, color: "#3a4558", weight: 1, fill: false, interactive: false }).addTo(map);
-      const p = destPoint(UMAN.lat, UMAN.lon, 0, km);
+      const p = destPoint(UMAN.lat, UMAN.lon, 200, km);
       L.marker(p, { interactive: false, icon: L.divIcon({ className: "ring-label", html: km + " ק״מ", iconSize: null }) }).addTo(map);
     });
-    CITIES.forEach(([n, la, lo]) => {
-      L.circleMarker([la, lo], { radius: 2, color: "#8892a6", weight: 1, fillOpacity: 1, interactive: false }).addTo(map);
-      L.marker([la, lo], { interactive: false, icon: L.divIcon({ className: "city-label", html: n, iconSize: null, iconAnchor: [-4, 8] }) }).addTo(map);
+    const minor = L.layerGroup();
+    CITIES.forEach(([n, la, lo, small]) => {
+      const g = small ? minor : map;
+      L.circleMarker([la, lo], { radius: 2, color: "#8892a6", weight: 1, fillOpacity: 1, interactive: false }).addTo(g);
+      L.marker([la, lo], { interactive: false, icon: L.divIcon({ className: "city-label", html: n, iconSize: null, iconAnchor: [-4, 8] }) }).addTo(g);
     });
+    const toggleMinor = () => { if (map.getZoom() >= 8) minor.addTo(map); else minor.remove(); };
+    map.on("zoomend", toggleMinor);
     L.circleMarker([UMAN.lat, UMAN.lon], { radius: 6, color: "#0e1117", weight: 2, fillColor: "#7fb3ff", fillOpacity: 1 }).addTo(map);
     L.marker([UMAN.lat, UMAN.lon], { interactive: false, icon: L.divIcon({ className: "city-label uman", html: "אומן", iconSize: null, iconAnchor: [-8, 9] }) }).addTo(map);
     threatLayer = L.layerGroup().addTo(map);
     map.fitBounds(L.latLng(UMAN.lat, UMAN.lon).toBounds(2 * 310 * 1000));
+    toggleMinor();
   }
   function renderMap(near) {
     initMap();
