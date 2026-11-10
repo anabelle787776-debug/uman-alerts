@@ -289,7 +289,7 @@
     "Сміла":"סמילה","Жашків":"ז'שקיב","Звенигородка":"זבניהורודקה","Тальне":"טלנה","Христинівка":"חריסטיניבקה",
     "Гайсин":"הייסין","Монастирище":"מונסטירישצ'ה","Новоукраїнка":"נובואוקראינקה","Голованівськ":"הולובניבסק"
   };
-  const WORDS = { "район":"רובע", "область":"מחוז", "громада":"קהילה" };
+  const WORDS = { "район":"אזור", "область":"מחוז", "громада":"קהילה" };
   const LETTERS = { б:"ב",в:"ב",г:"ה",ґ:"ג",д:"ד",ж:"ז'",з:"ז",й:"י",к:"ק",л:"ל",м:"מ",н:"נ",п:"פ",р:"ר",с:"ס",т:"ט",ф:"פ",х:"ח",ц:"צ",ч:"צ'",ш:"ש",щ:"שצ'",ь:"","'":"","’":"",ʼ:"" };
   const FINAL = { "כ":"ך","מ":"ם","נ":"ן","פ":"ף","צ":"ץ" };
   function heWord(w) {
@@ -366,16 +366,16 @@
     const el = $("status");
     el.className = "status " + (active ? "alert" : "clear");
     if (active) {
-      $("statusBig").textContent = "🔶 התרעה אווירית פעילה ברובע אומן";
+      $("statusBig").textContent = "🔶 התרעה אווירית פעילה באזור אומן";
       $("statusSub").textContent = `ההתרעה בתוקף ${since(active.since)} (מאז ${new Date(active.since).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}).`;
     } else {
-      $("statusBig").textContent = "✅ אין כרגע התרעה ברובע אומן";
+      $("statusBig").textContent = "✅ אין כרגע התרעה באזור אומן";
       $("statusSub").textContent = "המצב יכול להשתנות תוך דקות. כדי לשמוע סירנה בטלפון גם כשהדף סגור, התקינו את אפליקציית ההתרעות הרשמית של אוקראינה (פרטים למטה).";
     }
     const cherkRaions = raions.filter(r => r.oblast === OBLAST).map(r => he(r.name.replace(" район", "").replace(/ський$/, "")));
     $("cherkasy").textContent = obl ? "מחוז צ'רקסי כולו בהתרעה."
-      : cherkRaions.length ? `רובעים במחוז צ'רקסי שבהתרעה: ${cherkRaions.join(", ")}.`
-      : "אין כרגע התרעה באף רובע במחוז צ'רקסי.";
+      : cherkRaions.length ? `אזורים במחוז צ'רקסי שבהתרעה: ${cherkRaions.join(", ")}.`
+      : "אין כרגע התרעה באף אזור במחוז צ'רקסי.";
 
     const w = $("nearWarn");
     const approaching = near.filter(n => n.move === "approach" && !n.stale && !n.t.advisory);
