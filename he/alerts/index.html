@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>אומן – מצב איומים אוויריים בזמן אמת</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1117; --card:#161b24; --line:#252c39; --text:#e9ecf2; --muted:#98a1b1;
+    --alert:#e0a823; --alert-bg:rgba(224,168,35,.13);
+    --danger:#ec5b4f; --danger-bg:rgba(236,91,79,.14);
+    --ok:#4cc38a; --ok-bg:rgba(76,195,138,.12); --blue:#7fb3ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Heebo,system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:820px;margin:0 auto;padding:18px 14px 56px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  h1{font-size:1.5rem;margin:0;font-weight:800}
+  .sub{color:var(--muted);font-size:.9rem}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px;white-space:nowrap}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .live.on .dot{background:var(--ok);box-shadow:0 0 0 0 rgba(76,195,138,.6);animation:p 2s infinite}
+  .live.err .dot{background:var(--danger)}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(76,195,138,.6)}70%{box-shadow:0 0 0 8px rgba(76,195,138,0)}100%{box-shadow:0 0 0 0 rgba(76,195,138,0)}}
+
+  .status{margin:16px 0 12px;border-radius:16px;padding:18px;border:1px solid var(--line);background:var(--card)}
+  .status.alert{border-color:var(--alert);background:var(--alert-bg)}
+  .status.clear{border-color:var(--ok);background:var(--ok-bg)}
+  .status .big{font-size:1.45rem;font-weight:800}
+  .status.alert .big{color:var(--alert)}
+  .status.clear .big{color:var(--ok)}
+  .status p{margin:6px 0 0}
+  .near-warn{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--danger-bg);border:1px solid var(--danger);color:#ffd5d1;font-weight:500}
+
+  .disclaimer{font-size:.88rem;color:#ffd5d1;background:var(--danger-bg);border:1px solid rgba(236,91,79,.45);border-radius:12px;padding:10px 14px}
+
+  h2{font-size:1.12rem;margin:26px 0 10px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:700px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+
+  #radar{width:100%;max-width:380px;display:block;margin:0 auto}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:.8rem;color:var(--muted);margin-top:6px}
+  .legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:5px;vertical-align:middle;background:var(--c)}
+
+  .threat{display:grid;grid-template-columns:44px 1fr;gap:2px 12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .threat:last-child{border-bottom:0}
+  .ico{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-size:1.25rem;grid-row:span 3;background:#283041}
+  .threat.approach .ico{background:var(--danger);color:#fff}
+  .threat.pass .ico{background:var(--alert);color:#1b1400}
+  .threat.stale{opacity:.55}
+  .threat.advisory .ico{background:#2a3550}
+  .t1{font-weight:700}
+  .t2,.t3{color:var(--muted);font-size:.9rem}
+  .pill{display:inline-block;font-size:.76rem;font-weight:500;border-radius:6px;padding:1px 8px;margin-inline-start:6px;vertical-align:middle}
+  .pill.approach{background:var(--danger-bg);color:#ff9c93}
+  .pill.away{background:var(--ok-bg);color:var(--ok)}
+  .pill.pass{background:var(--alert-bg);color:var(--alert)}
+  .pill.unk{background:#283041;color:var(--muted)}
+  .empty{color:var(--muted);padding:8px 0}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .stat .n{font-size:1.5rem;font-weight:800}
+  .stat .l{color:var(--muted);font-size:.82rem}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+  summary{cursor:pointer;padding:12px 16px;font-weight:700;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";float:left;color:var(--muted);font-weight:400}
+  details[open] summary::after{content:"–"}
+  details .body{padding:0 16px 14px}
+  ul{padding-inline-start:20px;margin:6px 0}
+  li{margin:5px 0}
+  a{color:var(--blue)}
+  .muted{color:var(--muted)}
+  footer{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.85rem}
+  .ua{font-size:.85em;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>אומן – מצב איומים אוויריים</h1>
+      <div class="sub">התרעות ורחפנים סביב אומן, מחוז צ'רקסי · מתעדכן אוטומטית</div>
+    </div>
+    <div id="live" class="live"><span class="dot"></span><span id="liveText">מתחבר…</span></div>
+  </header>
+
+  <div id="status" class="status">
+    <div class="big" id="statusBig">טוען נתונים…</div>
+    <p id="statusSub" class="muted"></p>
+    <div id="nearWarn" class="near-warn" hidden></div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <b>זו לא מערכת התרעה רשמית.</b> הנתונים מגיעים מדיווחי תצפיתנים וייתכנו טעויות ועיכובים.
+    פעלו תמיד לפי הסירנות ולפי אפליקציית ההתרעות הרשמית של אוקראינה. בזמן סירנה, לכו למקום מוגן מיד.
+  </div>
+
+  <h2>מה קורה סביב אומן</h2>
+  <div class="grid">
+    <div class="card">
+      <div id="list"><div class="empty">טוען…</div></div>
+      <div class="muted" style="font-size:.8rem;margin-top:8px">מקור הנתונים: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">NEPTUN</a></div>
+    </div>
+    <div class="card">
+      <svg id="radar" viewBox="-200 -200 400 400" aria-label="מפת מכ״ם סביב אומן"></svg>
+      <div class="legend">
+        <span style="--c:var(--danger)">מתקרב</span>
+        <span style="--c:var(--alert)">חולף בצד</span>
+        <span style="--c:var(--ok)">מתרחק</span>
+        <span style="--c:#8892a6">כיוון לא ידוע</span>
+      </div>
+      <div class="muted" style="text-align:center;font-size:.8rem;margin-top:4px">טבעות: 50, 100 ו־150 ק״מ · צפון למעלה</div>
+    </div>
+  </div>
+
+  <h2>כל אוקראינה עכשיו</h2>
+  <div id="stats" class="stats"></div>
+  <p id="cherkasy" class="muted" style="font-size:.9rem"></p>
+
+  <h2>הסברים</h2>
+
+  <details open>
+    <summary>📱 אפליקציית ההתרעות הרשמית: מומלץ להתקין</summary>
+    <div class="body">
+      <p style="margin:0 0 6px">באוקראינה יש אפליקציית התרעות רשמית, שפותחה בתמיכת משרד הטרנספורמציה הדיגיטלית. היא משמיעה <b>סירנה בטלפון</b> כשמתחילה התרעה באזור שבחרתם, גם כשהטלפון נעול.</p>
+      <ul>
+        <li>חפשו בחנות האפליקציות (App Store או Google Play) את השם <b>Повітряна тривога</b>, כלומר "התרעה אווירית" באוקראינית. העתיקו את השם מכאן לחיפוש.</li>
+        <li>אחרי ההתקנה בחרו את האזור: <b>Черкаська область</b> (מחוז צ'רקסי), ואז <b>Уманський район</b> (רובע אומן).</li>
+        <li>אשרו לאפליקציה לשלוח התראות. אם היא מבקשת הרשאה ל"התראות קריטיות", אשרו גם אותה, כדי שהסירנה תישמע גם במצב שקט.</li>
+      </ul>
+      <p class="muted" style="margin:6px 0 0">הדף הזה מראה מה קורה, אבל רק האפליקציה הרשמית תעיר אתכם בלילה.</p>
+    </div>
+  </details>
+
+  <details open>
+    <summary>מה לעשות כשיש התרעה</summary>
+    <div class="body">
+      <ul>
+        <li><b>לכו למקום מוגן:</b> מקלט או חניון תת־קרקעי. אם אין, מסדרון פנימי, לפי <b>כלל שני הקירות</b>: לפחות שני קירות בינכם לבין הרחוב.</li>
+        <li><b>התרחקו מחלונות.</b> רוב הפציעות נגרמות מרסיסי זכוכית.</li>
+        <li><b>לא לצלם ולא לעמוד בחוץ</b> כששומעים רחפן או ירי של הגנה אווירית. רסיסים של יירוט נופלים בשטח רחב.</li>
+        <li><b>אם שמעתם את המנוע של שאהד</b> (זמזום כמו של אופנוע): התרחקו מחלונות מיד. כשהמנוע נעצר, הפגיעה קרובה.</li>
+        <li><b>לא לגעת בשברים</b> של רחפן או טיל, גם אם נראים כבויים. דווחו במספר 101 או 112.</li>
+        <li><b>הישארו במקום המוגן</b> עד שההתרעה מסתיימת באפליקציה הרשמית.</li>
+      </ul>
+      <p class="muted" style="margin:6px 0 0">מספרי חירום באוקראינה: <b>112</b> (כללי) · <b>101</b> (כבאות והצלה) · <b>102</b> (משטרה) · <b>103</b> (אמבולנס)</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>סוגי האיומים</summary>
+    <div class="body">
+      <ul>
+        <li><b>שאהד (Shahed / БпЛА):</b> רחפן תקיפה איטי, בערך 150–200 קמ״ש. בדרך כלל מגיע בלילה ובקבוצות.</li>
+        <li><b>שאהד סילוני:</b> גרסה מהירה יותר עם מנוע סילון, בערך 400–500 קמ״ש. יש פחות זמן להגיע למקום מוגן.</li>
+        <li><b>רחפן צילום (Розвідувальний):</b> אוסף מודיעין, ולפעמים מקדים תקיפה.</li>
+        <li><b>טיל שיוט:</b> מהיר ונמוך, ואפשר שיגיע תוך דקות ספורות.</li>
+        <li><b>טיל בליסטי:</b> מהיר מאוד, כך שבין האזהרה לפגיעה יש רק דקות. ללכת למקום מוגן מיד.</li>
+        <li><b>KAB (פצצה מונחית):</b> נפוצה בעיקר ליד קו החזית, לא באזור אומן.</li>
+        <li><b>MiG‑31K:</b> מטוס שנושא טילי "קינז'אל". כשהוא ממריא, יש התרעה בכל הארץ.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>איך לקרוא את הנתונים בדף</summary>
+    <div class="body">
+      <ul>
+        <li><b>מרחק וכיוון:</b> מחושבים ממרכז אומן לפי המיקום האחרון שדווח. הם משוערים, לפעמים בטעות של עשרות ק״מ.</li>
+        <li><b>"מתקרב":</b> הכיוון המדווח מוביל בערך לעבר אומן (בטווח של כ־25 ק״מ). <b>"חולף בצד"</b>: יעבור במרחק 25–60 ק״מ מהעיר. <b>"מתרחק"</b>: טס הלאה מהעיר או לא לכיוונה.</li>
+        <li><b>שאהדים משנים כיוון לעיתים קרובות</b>, וגם מסלול "מתרחק" יכול להשתנות.</li>
+        <li><b>"דווח לפני X דק׳":</b> ככל שעבר יותר זמן, המיקום פחות מדויק. דיווחים ישנים מוצגים בצבע חיוור.</li>
+        <li><b>"רק מחוז":</b> בדיווח נאמר רק המחוז, בלי מקום מדויק, ולכן אין מרחק.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>מקורות נוספים</summary>
+    <div class="body">
+      <ul>
+        <li>מפה מלאה: <a href="https://neptun.in.ua/" target="_blank" rel="noopener">neptun.in.ua</a></li>
+        <li>מפת ההתרעות הרשמית: <a href="https://map.ukrainealarm.com/" target="_blank" rel="noopener">map.ukrainealarm.com</a></li>
+        <li>אפליקציה רשמית: <b>Повітряна тривога</b> (App Store / Google Play)</li>
+        <li>תצפיתנים במחוז צ'רקסי (טלגרם): ‎@cherkasy_nebbo</li>
+      </ul>
+    </div>
+  </details>
+
+  <footer>
+    הנתונים מגיעים מה־API הפתוח של NEPTUN ומתעדכנים כל 10 שניות. NEPTUN הוא אוסף של דיווחים ולא מערכת התרעה רשמית.
+  </footer>
+</div>
+
+<script>
+(() => {
+  const API = "https://neptun.in.ua/api/v1";
+  const UMAN = { lat: 48.7484, lon: 30.2218 };
+  const RAION = "Уманський район";
+  const OBLAST = "Черкаська область";
+  const LIST_KM = 200, RADAR_KM = 150, STALE_MIN = 20, POLL_MS = 10000;
+
+  const TYPE = {
+    uav:      { he: "שאהד / רחפן תקיפה", icon: "✈" },
+    recon:    { he: "רחפן צילום", icon: "◉" },
+    missile:  { he: "טיל שיוט", icon: "➶" },
+    ballistic:{ he: "טיל בליסטי", icon: "⇡" },
+    kab:      { he: "פצצה מונחית (KAB)", icon: "▼" },
+    mig31k:   { he: "MiG‑31K (קינז׳אל)", icon: "✈" },
+    fpv:      { he: "רחפן FPV", icon: "✦" },
+    unknown:  { he: "מטרה לא מזוהה", icon: "?" }
+  };
+  const STAT_ORDER = ["uav","missile","ballistic","recon","kab","mig31k","fpv","unknown"];
+
+  const $ = id => document.getElementById(id);
+  const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+
+  function distKm(a, b) {
+    const R = 6371, dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+    const h = Math.sin(dLat/2)**2 + Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function bearing(a, b) {
+    const y = Math.sin(rad(b.lon - a.lon)) * Math.cos(rad(b.lat));
+    const x = Math.cos(rad(a.lat))*Math.sin(rad(b.lat)) - Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lon - a.lon));
+    return (deg(Math.atan2(y, x)) + 360) % 360;
+  }
+  const DIRS = ["צפון","צפון־מזרח","מזרח","דרום־מזרח","דרום","דרום־מערב","מערב","צפון־מערב"];
+  const DIRS_ADJ = ["צפונית","צפון־מזרחית","מזרחית","דרום־מזרחית","דרומית","דרום־מערבית","מערבית","צפון־מערבית"];
+  const compass = b => DIRS[Math.round(b / 45) % 8];
+  const compassAdj = b => DIRS_ADJ[Math.round(b / 45) % 8];
+  const hours = h => h === 1 ? "שעה" : h === 2 ? "שעתיים" : `${h} שעות`;
+  const angDiff = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+
+  function typeLabel(t) {
+    const title = (t.title || "");
+    if (/реактивн/i.test(title)) return { he: "שאהד סילוני", icon: "✈" };
+    if (/шахед|shahed|герань/i.test(title)) return { he: "שאהד", icon: "✈" };
+    return TYPE[t.type] || TYPE.unknown;
+  }
+  function ago(iso) {
+    if (!iso) return "";
+    const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+    if (m < 1) return "עכשיו";
+    if (m < 60) return `לפני ${m} דק׳`;
+    const h = Math.floor(m / 60);
+    return `לפני ${hours(h)}${m % 60 ? " ו־" + (m % 60) + " דק׳" : ""}`;
+  }
+  function since(iso) {
+    const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+    if (m < 60) return `${m} דקות`;
+    const h = Math.floor(m / 60);
+    return `${hours(h)}${m % 60 ? " ו־" + (m % 60) + " דקות" : ""}`;
+  }
+  // Ukrainian place names → Hebrew letters
+  const PLACES = {
+    "Умань":"אומן","Черкаси":"צ'רקסי","Київ":"קייב","Вінниця":"ויניצה","Кропивницький":"קרופיבניצקי",
+    "Біла Церква":"ביילה צרקווה","Кременчук":"קרמנצ'וק","Полтава":"פולטבה","Одеса":"אודסה","Житомир":"ז'יטומיר",
+    "Харків":"חרקוב","Дніпро":"דניפרו","Миколаїв":"מיקולאייב","Запоріжжя":"זפוריז'יה","Суми":"סומי","Чернігів":"צ'רניהיב",
+    "Сміла":"סמילה","Жашків":"ז'שקיב","Звенигородка":"זבניהורודקה","Тальне":"טלנה","Христинівка":"חריסטיניבקה",
+    "Гайсин":"הייסין","Монастирище":"מונסטירישצ'ה","Новоукраїнка":"נובואוקראינקה","Голованівськ":"הולובניבסק"
+  };
+  const WORDS = { "район":"רובע", "область":"מחוז", "громада":"קהילה" };
+  const L = { б:"ב",в:"ב",г:"ה",ґ:"ג",д:"ד",ж:"ז'",з:"ז",й:"י",к:"ק",л:"ל",м:"מ",н:"נ",п:"פ",р:"ר",с:"ס",т:"ט",ф:"פ",х:"ח",ц:"צ",ч:"צ'",ш:"ש",щ:"שצ'",ь:"","'":"","’":"",ʼ:"" };
+  const FINAL = { "כ":"ך","מ":"ם","נ":"ן","פ":"ף","צ":"ץ" };
+  function heWord(w) {
+    if (PLACES[w]) return PLACES[w];
+    const lw = w.toLowerCase();
+    if (WORDS[lw]) return WORDS[lw];
+    if (!/[а-яіїєґ]/i.test(w)) return w;
+    const s = lw.replace(/([бвгґджзклмнпрстфхцчшщ])\1/g, "$1").replace(/ий$/, "י").replace(/ій$/, "יי");
+    let out = "";
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i], first = i === 0, last = i === s.length - 1, next = s[i + 1];
+      if (L[c] !== undefined) { out += L[c]; continue; }
+      switch (c) {
+        case "а": out += (first || /[аоуеіиїєяю]/.test(s[i - 1])) ? "א" : last ? "ה" : (next === "й" || next === "ї") ? "א" : ""; break;
+        case "о": out += first ? "או" : "ו"; break;
+        case "у": out += first ? "או" : "ו"; break;
+        case "і": case "и": out += first ? "אי" : next === "ї" ? "" : "י"; break;
+        case "ї": out += first ? "יי" : "יי"; break;
+        case "е": out += first ? "א" : last ? "ה" : ""; break;
+        case "є": out += first ? "יה" : "יה"; break;
+        case "я": out += first ? "יא" : last ? "יה" : "יא"; break;
+        case "ю": out += "יו"; break;
+        default: out += c;
+      }
+    }
+    // final-form letters (not before a geresh)
+    return out.replace(/([כמנפצ])$/, (m, ch) => FINAL[ch]);
+  }
+  const he = name => name ? (PLACES[name] || String(name).split(/(\s+|-)/).map(p => /\s+|-/.test(p) ? p : heWord(p)).join("")) : "";
+
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+  function analyse(t) {
+    const out = { t, lab: typeLabel(t), stale: t.status === "stale" ||
+      (t.updatedAt && (Date.now() - new Date(t.updatedAt)) / 60000 > STALE_MIN) };
+    const inCherkasy = (t.region || "").includes("Черкас");
+    if (t.areaOnly) { out.areaOnly = true; out.relevant = inCherkasy; out.dist = Infinity; return out; }
+    if (typeof t.lat !== "number" || typeof t.lon !== "number") { out.relevant = false; return out; }
+    const p = { lat: t.lat, lon: t.lon };
+    out.dist = distKm(UMAN, p);
+    out.fromUman = bearing(UMAN, p);
+    out.relevant = out.dist <= LIST_KM;
+    const hdg = (t.velocity && typeof t.velocity.bearingDeg === "number") ? t.velocity.bearingDeg
+              : (typeof t.heading === "number" ? t.heading : null);
+    out.speed = t.velocity && t.velocity.speedKmh;
+    if (hdg === null) { out.move = "unk"; return out; }
+    out.heading = hdg;
+    const toUman = bearing(p, UMAN);
+    const d = angDiff(hdg, toUman);
+    // closest pass distance if it kept this course
+    const cross = Math.abs(out.dist * Math.sin(rad(d)));
+    if (out.dist < 15) out.move = "close";
+    else if (d < 90 && cross < 25) out.move = "approach";
+    else if (d < 90 && cross < 60) out.move = "pass";
+    else out.move = "away";
+    out.cross = cross;
+    if (out.move === "approach" && out.speed > 0) out.eta = Math.round(out.dist / out.speed * 60);
+    return out;
+  }
+
+  const MOVE = {
+    close:    { cls: "approach", txt: "קרוב מאוד לאומן", color: "var(--danger)" },
+    approach: { cls: "approach", txt: "מתקרב לאומן", color: "var(--danger)" },
+    pass:     { cls: "pass", txt: "חולף בצד", color: "var(--alert)" },
+    away:     { cls: "away", txt: "מתרחק", color: "var(--ok)" },
+    unk:      { cls: "unk", txt: "כיוון לא ידוע", color: "#8892a6" }
+  };
+
+  function renderStatus(alerts, near) {
+    const raions = alerts.raions || [], oblasts = alerts.oblasts || [];
+    const raion = raions.find(r => r.name === RAION);
+    const obl = oblasts.find(o => o.name === OBLAST);
+    const active = raion || obl;
+    const el = $("status");
+    el.className = "status " + (active ? "alert" : "clear");
+    if (active) {
+      $("statusBig").textContent = "🔶 התרעה אווירית פעילה ברובע אומן";
+      $("statusSub").textContent = `ההתרעה בתוקף ${since(active.since)} (מאז ${new Date(active.since).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}).`;
+    } else {
+      $("statusBig").textContent = "✅ אין כרגע התרעה ברובע אומן";
+      $("statusSub").textContent = "המצב יכול להשתנות תוך דקות. כדי לשמוע סירנה בטלפון גם כשהדף סגור, התקינו את אפליקציית ההתרעות הרשמית של אוקראינה (פרטים למטה).";
+    }
+    const cherkRaions = raions.filter(r => r.oblast === OBLAST).map(r => he(r.name.replace(" район", "").replace(/ський$/, "")));
+    $("cherkasy").textContent = obl ? "מחוז צ'רקסי כולו בהתרעה."
+      : cherkRaions.length ? `רובעים במחוז צ'רקסי שבהתרעה: ${cherkRaions.join(", ")}.`
+      : "אין כרגע התרעה באף רובע במחוז צ'רקסי.";
+
+    const w = $("nearWarn");
+    const approaching = near.filter(n => n.move === "approach" && !n.stale && !n.t.advisory);
+    const close = near.filter(n => n.dist <= 30 && !n.stale && !n.t.advisory);
+    if (approaching.length || close.length) {
+      w.hidden = false;
+      const parts = [];
+      if (close.length) parts.push(`${close.length} מטרות במרחק עד 30 ק״מ מאומן`);
+      if (approaching.length) parts.push(`${approaching.length} מטרות בכיוון שמוביל לאומן`);
+      w.textContent = "🚨 " + parts.join(" · ") + ". היו קרובים למקום מוגן.";
+    } else w.hidden = true;
+  }
+
+  function renderList(near) {
+    const box = $("list");
+    if (!near.length) { box.innerHTML = `<div class="empty">אין מטרות מדווחות ברדיוס של ${LIST_KM} ק״מ מאומן.</div>`; return; }
+    box.innerHTML = near.map(n => {
+      const t = n.t, m = MOVE[n.areaOnly ? "unk" : n.move];
+      const cnt = t.count > 1 ? ` × ${t.count}` : "";
+      const whereUa = [t.locality, t.district && t.district !== t.locality ? t.district : ""].filter(Boolean).join(", ");
+      const where = [he(t.locality), t.district && t.district !== t.locality ? he(t.district) : ""].filter(Boolean).join(", ");
+      let line2;
+      if (n.areaOnly) line2 = "רק מחוז צ'רקסי, בלי מיקום מדויק";
+      else line2 = `${Math.round(n.dist)} ק״מ ${compassAdj(n.fromUman)} לאומן` +
+        (n.heading != null ? ` · טס לכיוון ${compass(n.heading)}` : "") +
+        (n.speed ? ` · ~${Math.round(n.speed)} קמ״ש` : "");
+      let line3 = `דווח ${ago(t.updatedAt)}`;
+      if (n.eta && n.eta < 240) line3 += ` · אם ימשיך כך, בעוד ~${n.eta} דק׳`;
+      if (t.sourceCount) line3 += ` · ${t.sourceCount} מקורות`;
+      if (t.advisory) line3 += " · תצפית בלבד";
+      const cls = ["threat", n.areaOnly ? "" : m.cls, n.stale ? "stale" : "", t.advisory ? "advisory" : ""].join(" ");
+      return `<div class="${cls}">
+        <div class="ico">${n.lab.icon}</div>
+        <div class="t1">${esc(n.lab.he)}${cnt}<span class="pill ${m.cls}">${n.stale ? "דיווח ישן" : m.txt}</span></div>
+        <div class="t2">${esc(line2)}${where ? ` · <span class="ua" title="${esc(whereUa)}">ליד ${esc(where)}</span>` : ""}</div>
+        <div class="t3">${esc(line3)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderRadar(near) {
+    const s = 180 / RADAR_KM; // px per km
+    let g = "";
+    [50, 100, 150].forEach(r => {
+      g += `<circle cx="0" cy="0" r="${r*s}" fill="none" stroke="#2a3242" stroke-width="1"/>`;
+      g += `<text x="3" y="${-r*s+12}" fill="#5f6a7d" font-size="10">${r}</text>`;
+    });
+    g += `<line x1="0" y1="-185" x2="0" y2="185" stroke="#1f2633"/><line x1="-185" y1="0" x2="185" y2="0" stroke="#1f2633"/>`;
+    g += `<text x="0" y="-188" fill="#98a1b1" font-size="12" text-anchor="middle">צ</text>`;
+    g += `<circle cx="0" cy="0" r="5" fill="#7fb3ff"/><text x="0" y="18" fill="#c8d3e6" font-size="12" text-anchor="middle">אומן</text>`;
+    near.filter(n => !n.areaOnly && n.dist <= RADAR_KM).forEach(n => {
+      const r = n.dist * s, a = rad(n.fromUman);
+      const x = r * Math.sin(a), y = -r * Math.cos(a);
+      const c = n.stale ? "#59627a" : MOVE[n.move].color;
+      if (n.heading != null) {
+        const h = rad(n.heading), L = 22;
+        g += `<line x1="${x}" y1="${y}" x2="${x + L*Math.sin(h)}" y2="${y - L*Math.cos(h)}" stroke="${c}" stroke-width="2" marker-end="url(#ah)" opacity=".9"/>`;
+      }
+      g += `<circle cx="${x}" cy="${y}" r="${n.t.count > 1 ? 7 : 5.5}" fill="${c}" stroke="#0e1117" stroke-width="1.5"/>`;
+    });
+    $("radar").innerHTML = `<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c8d3e6"/></marker></defs>` + g;
+  }
+
+  function renderStats(threats) {
+    const c = {};
+    threats.filter(t => t.status !== "resolved").forEach(t => { c[t.type] = (c[t.type] || 0) + (t.count > 1 ? t.count : 1); });
+    const items = STAT_ORDER.filter(k => c[k]).map(k => `<div class="stat"><div class="n">${c[k]}</div><div class="l">${TYPE[k].he}</div></div>`);
+    $("stats").innerHTML = items.length ? items.join("") : `<div class="muted">אין כרגע מטרות פעילות בכל הארץ.</div>`;
+  }
+
+  function setLive(ok, txt) {
+    $("live").className = "live " + (ok ? "on" : "err");
+    $("liveText").textContent = txt;
+  }
+
+  let lastOk = 0;
+  async function tick() {
+    try {
+      const [tr, ar] = await Promise.all([
+        fetch(API + "/threats", { cache: "no-store" }).then(r => { if (!r.ok) throw r.status; return r.json(); }),
+        fetch(API + "/alerts", { cache: "no-store" }).then(r => { if (!r.ok) throw r.status; return r.json(); })
+      ]);
+      const threats = (tr.threats || []).filter(t => t.status !== "resolved");
+      const near = threats.map(analyse).filter(n => n.relevant)
+        .sort((a, b) => (a.stale - b.stale) || (a.dist - b.dist));
+      renderStatus(ar, near);
+      renderList(near);
+      renderRadar(near);
+      renderStats(threats);
+      lastOk = Date.now();
+      setLive(true, "עודכן " + new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    } catch (e) {
+      const stale = lastOk ? ` · הנתונים מ־${new Date(lastOk).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}` : "";
+      setLive(false, "אין חיבור לנתונים" + stale);
+      if (!lastOk) { $("statusBig").textContent = "לא ניתן לטעון נתונים"; $("statusSub").textContent = "בדקו את החיבור לאינטרנט. בינתיים, פעלו לפי האפליקציה הרשמית."; }
+    }
+  }
+  tick();
+  setInterval(tick, POLL_MS);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+})();
+</script>
+</body>
+</html>
