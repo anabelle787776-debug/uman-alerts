@@ -114,6 +114,8 @@
   .t2,.t3{font-size:.95rem}
   .pill{font-size:.85rem}
   .legend{font-size:.9rem}
+  .tm{position:relative}
+  .tm .cnt{position:absolute;top:-6px;left:-6px;background:#e9ecf2;color:#0e1117;font-size:11px;font-weight:800;line-height:1;border-radius:9px;padding:2px 5px}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -151,6 +153,7 @@
         <span style="--c:var(--ok)">מתרחק</span>
         <span style="--c:#8892a6">כיוון לא ידוע</span>
       </div>
+      <div id="mapNote" style="text-align:center;font-size:.95rem;margin-top:8px"></div>
       <div class="muted" style="text-align:center;font-size:.8rem;margin-top:4px">העיגולים מראים 50, 100, 200 ו־300 ק״מ מאומן. אפשר להגדיל ולהזיז את המפה.</div>
       <div class="shortcut" id="shortcut" hidden>
         <button id="shortcutBtn" type="button"><img src="/icon-192.png" alt="">הוספת קיצור למסך הבית בטלפון הנייד</button>
@@ -514,19 +517,42 @@
     map.fitBounds(L.latLng(UMAN.lat, UMAN.lon).toBounds(2 * 310 * 1000));
     toggleMinor();
   }
-  function renderMap(near) {
+  let userMoved = false;
+  function renderMap(items, areaOnes) {
     initMap();
     if (!map) return;
+    if (!map.__hooked) { map.__hooked = true; map.on("dragstart zoomstart", e => { if (!map.__auto) userMoved = true; }); }
     threatLayer.clearLayers();
-    near.filter(n => !n.areaOnly).forEach(n => {
+    const pts = [[UMAN.lat, UMAN.lon]];
+    items.filter(n => !n.areaOnly && typeof n.t.lat === "number").forEach(n => {
       const t = n.t, c = n.stale ? "#59627a" : MOVE[n.move].color;
       const size = t.count > 1 ? 26 : 22;
       const rot = n.heading != null ? n.heading : 0;
-      const svg = symbol(t.type, c, size, rot);
-      const label = `${n.lab.he}${t.count > 1 ? " × " + t.count : ""} · ${Math.round(n.dist)} ק״מ`;
-      L.marker([t.lat, t.lon], { icon: L.divIcon({ className: "", html: svg, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }) })
+      const badge = t.count > 1 ? `<span class="cnt">${t.count}</span>` : "";
+      const label = `${n.lab.he}${t.count > 1 ? " × " + t.count : ""}, ${Math.round(n.dist)} ק״מ מאומן`;
+      L.marker([t.lat, t.lon], { icon: L.divIcon({ className: "tm", html: symbol(t.type, c, size, rot) + badge, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }) })
         .bindTooltip(label, { direction: "top" }).addTo(threatLayer);
+      pts.push([t.lat, t.lon]);
     });
+    (areaOnes || []).forEach(n => {
+      const t = n.t;
+      L.circle([t.lat, t.lon], { radius: 60000, color: "#8892a6", weight: 1, dashArray: "4 4", fillColor: "#8892a6", fillOpacity: .08, interactive: false }).addTo(threatLayer);
+      L.marker([t.lat, t.lon], { opacity: .7, icon: L.divIcon({ className: "tm", html: symbol(t.type, "#8892a6", 20, 0) + (t.count > 1 ? `<span class="cnt">${t.count}</span>` : ""), iconSize: [20, 20], iconAnchor: [10, 10] }) })
+        .bindTooltip(`${n.lab.he}${t.count > 1 ? " × " + t.count : ""}: ידוע רק המחוז (${he(t.region)}), בלי מיקום מדויק`, { direction: "top" }).addTo(threatLayer);
+      pts.push([t.lat, t.lon]);
+    });
+    // until the visitor moves the map, keep every reported target in view
+    if (!userMoved) {
+      map.__auto = true;
+      const b = L.latLngBounds(pts).extend(L.latLng(UMAN.lat, UMAN.lon).toBounds(2 * 160 * 1000));
+      map.fitBounds(b, { padding: [24, 24], maxZoom: 7, animate: false });
+      setTimeout(() => { map.__auto = false; }, 0);
+    }
+    const shown = items.filter(n => !n.areaOnly && typeof n.t.lat === "number").reduce((s, n) => s + (n.t.count > 1 ? n.t.count : 1), 0);
+    const vague = (areaOnes || []).reduce((s, n) => s + (n.t.count > 1 ? n.t.count : 1), 0);
+    $("mapNote").textContent = shown || vague
+      ? `במפה ${shown} מטרות` + (vague ? `, ועוד ${vague} שידוע עליהן רק המחוז (בעיגול מקווקו).` : ".")
+      : "אין כרגע מטרות מדווחות באוקראינה.";
   }
 
   function renderStats(threats) {
@@ -557,7 +583,8 @@
       window.__nearestFar = far[0] || null;
       renderStatus(ar, near);
       renderList(near);
-      renderMap(near.concat(far));
+      const areaOnes = analysed.filter(n => n.areaOnly && typeof n.t.lat === "number");
+      renderMap(near.filter(n => !n.areaOnly).concat(far), areaOnes);
       renderStats(threats);
       lastOk = Date.now();
       setLive(true, "עודכן ב־" + new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }));
