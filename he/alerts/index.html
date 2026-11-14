@@ -18,6 +18,12 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0e1117">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="התרעות אומן">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -99,6 +105,14 @@
   .city-label.uman{color:#7fb3ff;font-weight:800;font-size:13px}
   .ring-label{color:#6b778c;font-size:10px;white-space:nowrap}
   .far-warn{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--alert-bg);border:1px solid var(--alert);color:#ffe2a6}
+  .install{position:relative;margin:14px 0 0;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#1b2a45,#162033);border:1px solid #2c4166;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .install img{width:40px;height:40px;border-radius:10px;flex:none}
+  .install-text{flex:1;min-width:170px;font-size:.92rem;line-height:1.4}
+  .install-text span{color:var(--muted)}
+  .install button{font:inherit;cursor:pointer;border:0}
+  #installBtn{background:#e0a823;color:#1b1400;font-weight:800;border-radius:10px;padding:9px 14px}
+  #installClose{position:absolute;top:6px;left:8px;background:none;color:var(--muted);font-size:1rem;padding:4px}
+  .install-help{flex-basis:100%;font-size:.88rem;color:#dfe6f2;background:rgba(0,0,0,.25);border-radius:10px;padding:10px 12px}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -113,6 +127,14 @@
     </div>
     <div id="live" class="live"><span class="dot"></span><span id="liveText">מתחבר…</span></div>
   </header>
+
+  <div id="installBar" class="install" hidden>
+    <img src="/icon-192.png" alt="">
+    <div class="install-text"><b>שמרו את הדף כאפליקציה בטלפון</b><br><span>כניסה בלחיצה אחת מהמסך הראשי, בלי לחפש את הקישור.</span></div>
+    <button id="installBtn" type="button">הוספה למסך</button>
+    <button id="installClose" type="button" aria-label="סגירה">✕</button>
+    <div id="installHelp" class="install-help" hidden></div>
+  </div>
 
   <div id="status" class="status">
     <div class="big" id="statusBig">טוען נתונים…</div>
@@ -536,6 +558,58 @@
   tick();
   setInterval(tick, POLL_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+})();
+</script>
+<script>
+(() => {
+  const bar = document.getElementById("installBar"), btn = document.getElementById("installBtn"),
+        help = document.getElementById("installHelp"), close = document.getElementById("installClose");
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem("installDismissed") === "1"; } catch (e) {}
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  if (standalone || dismissed) return;
+
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const android = /android/i.test(ua);
+  const inApp = /FBAN|FBAV|Instagram|Line\/|WhatsApp|Telegram/i.test(ua);
+  let deferred = null;
+
+  const show = () => { bar.hidden = false; };
+  const hide = () => { bar.hidden = true; };
+
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; show(); });
+  window.addEventListener("appinstalled", hide);
+
+  if (ios) {
+    show();
+    help.innerHTML = inApp
+      ? "קודם פתחו את הדף בספארי: לחצו על שלוש הנקודות או על סמל הדפדפן, ובחרו <b>פתיחה בספארי</b>. אחר כך לחצו על כפתור השיתוף (ריבוע עם חץ למעלה) ובחרו <b>הוספה למסך הבית</b>."
+      : "לחצו על כפתור השיתוף בתחתית המסך (ריבוע עם חץ למעלה), גללו ובחרו <b>הוספה למסך הבית</b>, ואז <b>הוספה</b>.";
+  } else if (android) {
+    setTimeout(() => {
+      if (deferred) return;
+      show();
+      help.innerHTML = inApp
+        ? "קודם פתחו את הדף בכרום: לחצו על שלוש הנקודות למעלה ובחרו <b>פתיחה בדפדפן</b>. שם תופיע אפשרות ההוספה למסך."
+        : "לחצו על שלוש הנקודות של הדפדפן ובחרו <b>הוספה למסך הבית</b> או <b>התקנת אפליקציה</b>.";
+    }, 2500);
+  }
+
+  btn.addEventListener("click", async () => {
+    if (deferred) {
+      deferred.prompt();
+      try { const r = await deferred.userChoice; if (r.outcome === "accepted") hide(); } catch (e) {}
+      deferred = null;
+      return;
+    }
+    help.hidden = !help.hidden;
+  });
+  close.addEventListener("click", () => {
+    hide();
+    try { localStorage.setItem("installDismissed", "1"); } catch (e) {}
+  });
 })();
 </script>
 </body>
