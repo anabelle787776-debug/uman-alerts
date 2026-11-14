@@ -24,7 +24,7 @@
 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0e1117; --card:#161b24; --line:#252c39; --text:#e9ecf2; --muted:#98a1b1;
@@ -33,7 +33,7 @@
     --ok:#4cc38a; --ok-bg:rgba(76,195,138,.12); --blue:#7fb3ff;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Heebo,system-ui,sans-serif;line-height:1.55}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Rubik,system-ui,sans-serif;font-size:17px;line-height:1.55}
   .wrap{max-width:820px;margin:0 auto;padding:18px 14px 56px}
   header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
   h1{font-size:1.5rem;margin:0;font-weight:800}
@@ -97,7 +97,7 @@
   footer{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.85rem}
   .ua{font-size:.85em;color:var(--muted)}
   #map{height:400px;border-radius:10px;background:#0e1117;z-index:0;direction:ltr}
-  .leaflet-container{font-family:Heebo,system-ui,sans-serif;background:#0e1117}
+  .leaflet-container{font-family:Rubik,system-ui,sans-serif;background:#0e1117}
   #map .leaflet-tile-pane{filter:brightness(2.4) contrast(1.15)}
   .city-label{color:#c8d3e6;font-size:12px;font-weight:500;text-shadow:0 0 3px #000,0 0 3px #000;white-space:nowrap}
   .city-label.uman{color:#7fb3ff;font-weight:800;font-size:13px}
@@ -108,6 +108,12 @@
   #shortcutBtn:active{transform:scale(.98)}
   #shortcutBtn img{width:26px;height:26px;border-radius:7px}
   #shortcutHelp{max-width:420px;margin:12px auto 0;font-size:.95rem;color:#e9ecf2;line-height:1.6;background:#1d2533;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:right}
+  .status .big{font-size:1.7rem;line-height:1.25}
+  .status-sub{font-size:1.05rem;margin:8px 0 0;color:var(--text)}
+  .status-near{margin:12px 0 0;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);font-size:1rem;color:var(--text)}
+  .t2,.t3{font-size:.95rem}
+  .pill{font-size:.85rem}
+  .legend{font-size:.9rem}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -117,15 +123,16 @@
 
   <header>
     <div>
-      <h1>אומן – מצב איומים אוויריים</h1>
-      <div class="sub">התרעות ורחפנים סביב אומן, מחוז צ'רקסי · מתעדכן אוטומטית</div>
+      <h1>התרעות אומן</h1>
+      <div class="sub">מה קורה עכשיו בשמיים סביב אומן</div>
     </div>
     <div id="live" class="live"><span class="dot"></span><span id="liveText">מתחבר…</span></div>
   </header>
 
   <div id="status" class="status">
     <div class="big" id="statusBig">טוען נתונים…</div>
-    <p id="statusSub" class="muted"></p>
+    <p id="statusSub" class="status-sub"></p>
+    <p id="statusNear" class="status-near" hidden></p>
     <div id="nearWarn" class="near-warn" hidden></div>
     <div id="farWarn" class="far-warn" hidden></div>
   </div>
@@ -134,7 +141,7 @@
     ⚠️ <b>לא מערכת התרעה רשמית.</b> בזמן סירנה, לכו למקום מוגן מיד.
   </div>
 
-  <h2>מה קורה סביב אומן</h2>
+  <h2>סביב אומן</h2>
   <div class="grid">
     <div class="card">
       <div id="map" aria-label="מפה סביב אומן"></div>
@@ -144,7 +151,7 @@
         <span style="--c:var(--ok)">מתרחק</span>
         <span style="--c:#8892a6">כיוון לא ידוע</span>
       </div>
-      <div class="muted" style="text-align:center;font-size:.8rem;margin-top:4px">טבעות: 50, 100, 200 ו־300 ק״מ מאומן · אפשר להגדיל ולהזיז את המפה</div>
+      <div class="muted" style="text-align:center;font-size:.8rem;margin-top:4px">העיגולים מראים 50, 100, 200 ו־300 ק״מ מאומן. אפשר להגדיל ולהזיז את המפה.</div>
       <div class="shortcut" id="shortcut" hidden>
         <button id="shortcutBtn" type="button"><img src="/icon-192.png" alt="">הוספת קיצור למסך הבית בטלפון הנייד</button>
         <div id="shortcutHelp" hidden></div>
@@ -156,7 +163,7 @@
     </div>
   </div>
 
-  <h2>כל אוקראינה עכשיו</h2>
+  <h2>בכל אוקראינה כרגע</h2>
   <div id="stats" class="stats"></div>
   <p id="cherkasy" class="muted" style="font-size:.9rem;margin-bottom:24px"></p>
 
@@ -394,11 +401,11 @@
     const el = $("status");
     el.className = "status " + (active ? "alert" : "clear");
     if (active) {
-      $("statusBig").textContent = "🔶 התרעה אווירית פעילה באזור אומן";
-      $("statusSub").textContent = `ההתרעה בתוקף ${since(active.since)} (מאז ${new Date(active.since).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}).`;
+      $("statusBig").textContent = "יש התרעה באזור אומן";
+      $("statusSub").textContent = `היכנסו למקום מוגן והישארו בו עד סוף ההתרעה. ההתרעה התחילה ב־${new Date(active.since).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}.`;
     } else {
-      $("statusBig").textContent = "✅ אין כרגע התרעה באזור אומן";
-      $("statusSub").textContent = "המצב יכול להשתנות תוך דקות. כדי לשמוע סירנה בטלפון גם כשהדף סגור, התקינו את אפליקציית ההתרעות הרשמית של אוקראינה (פרטים למטה).";
+      $("statusBig").textContent = "אין התרעה באזור אומן";
+      $("statusSub").textContent = "המצב יכול להשתנות תוך דקות.";
     }
     const cherkRaions = raions.filter(r => r.oblast === OBLAST).map(r => he(r.name.replace(" район", "").replace(/ський$/, "")));
     $("cherkasy").textContent = obl ? "מחוז צ'רקסי כולו בהתרעה."
@@ -415,6 +422,14 @@
       if (approaching.length) parts.push(`${approaching.length} מטרות בכיוון שמוביל לאומן`);
       w.textContent = "🚨 " + parts.join(" · ") + ". היו קרובים למקום מוגן.";
     } else w.hidden = true;
+
+    const nl = $("statusNear");
+    const closest = near.filter(n => !n.stale && !n.areaOnly && isFinite(n.dist))[0] || window.__nearestFar;
+    if (closest) {
+      const moveWord = { close: "קרוב מאוד", approach: "מתקרב לאומן", pass: "חולף בצד", away: "מתרחק", unk: "כיוון לא ידוע" }[closest.move] || "";
+      nl.textContent = `הקרוב ביותר: ${closest.lab.he}, ${Math.round(closest.dist)} ק״מ ${compassAdj(closest.fromUman)} לאומן${moveWord ? ", " + moveWord : ""}.`;
+    } else nl.textContent = "אין כרגע רחפנים או טילים מדווחים באוקראינה.";
+    nl.hidden = false;
 
     // nationwide missile-type threats, and alert with nothing nearby
     const fw = $("farWarn");
@@ -447,18 +462,16 @@
       let line2;
       if (n.areaOnly) line2 = "רק מחוז צ'רקסי, בלי מיקום מדויק";
       else line2 = `${Math.round(n.dist)} ק״מ ${compassAdj(n.fromUman)} לאומן` +
-        (n.heading != null ? ` · טס לכיוון ${compass(n.heading)}` : "") +
-        (n.speed ? ` · ~${Math.round(n.speed)} קמ״ש` : "");
-      let line3 = `דווח ${ago(t.updatedAt)}`;
-      if (n.eta && n.eta < 240) line3 += ` · אם ימשיך כך, בעוד ~${n.eta} דק׳`;
-      if (t.sourceCount) line3 += ` · ${t.sourceCount} מקורות`;
-      if (t.advisory) line3 += " · תצפית בלבד";
+        (n.heading != null ? `, טס לכיוון ${compass(n.heading)}` : "") + ".";
+      let line3 = (where ? `ליד ${where}. ` : "") + `דווח ${ago(t.updatedAt)}.`;
+      if (n.eta && n.eta < 240) line3 += ` אם ימשיך כך, יגיע בעוד כ־${n.eta} דקות.`;
+      if (t.advisory) line3 += " תצפית בלבד.";
       const cls = ["threat", n.areaOnly ? "" : m.cls, n.stale ? "stale" : "", t.advisory ? "advisory" : ""].join(" ");
       return `<div class="${cls}">
         <div class="ico">${symbol(t.type, "currentColor", 24, 0)}</div>
         <div class="t1">${esc(n.lab.he)}${cnt}<span class="pill ${m.cls}">${n.stale ? "דיווח ישן" : m.txt}</span></div>
-        <div class="t2">${esc(line2)}${where ? ` · <span class="ua" title="${esc(whereUa)}">ליד ${esc(where)}</span>` : ""}</div>
-        <div class="t3">${esc(line3)}</div>
+        <div class="t2">${esc(line2)}</div>
+        <div class="t3" title="${esc(whereUa)}">${esc(line3)}</div>
       </div>`;
     }).join("");
   }
@@ -547,7 +560,7 @@
       renderMap(near.concat(far));
       renderStats(threats);
       lastOk = Date.now();
-      setLive(true, "עודכן " + new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setLive(true, "עודכן ב־" + new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }));
     } catch (e) {
       const stale = lastOk ? ` · הנתונים מ־${new Date(lastOk).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}` : "";
       setLive(false, "אין חיבור לנתונים" + stale);
