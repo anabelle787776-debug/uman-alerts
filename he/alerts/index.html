@@ -453,7 +453,7 @@
     const box = $("list");
     if (!near.length) {
       const nf = window.__nearestFar;
-      const extra = nf ? `<br>הקרובה ביותר: ${esc(nf.lab.he)}, ${Math.round(nf.dist)} ק״מ ${compassAdj(nf.fromUman)} לאומן${nf.t.locality ? ", ליד " + esc(he(nf.t.locality)) : ""}. מטרות רחוקות מופיעות במפה כשמקטינים אותה.` : "";
+      const extra = nf ? `<br>הקרובה ביותר: ${esc(nf.lab.he)}, ${Math.round(nf.dist)} ק״מ ${compassAdj(nf.fromUman)} לאומן${nf.t.locality ? ", ליד " + esc(he(nf.t.locality)) : ""}. כל המטרות מופיעות במפה.` : "";
       box.innerHTML = `<div class="empty">אין מטרות מדווחות ברדיוס של ${LIST_KM} ק״מ מאומן.${extra}</div>`;
       return;
     }
