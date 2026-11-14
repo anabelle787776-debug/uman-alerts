@@ -195,8 +195,8 @@
         <li><b>רחפן צילום (Розвідувальний):</b> אוסף מודיעין, ולפעמים מקדים תקיפה.</li>
         <li><b>טיל שיוט:</b> מהיר ונמוך, ואפשר שיגיע תוך דקות ספורות.</li>
         <li><b>טיל בליסטי:</b> מהיר מאוד, כך שבין האזהרה לפגיעה יש רק דקות. ללכת למקום מוגן מיד.</li>
-        <li><b>KAB (פצצה מונחית):</b> נפוצה בעיקר ליד קו החזית, לא באזור אומן.</li>
-        <li><b>MiG‑31K:</b> מטוס שנושא טילי "קינז'אל". כשהוא ממריא, יש התרעה בכל הארץ.</li>
+        <li><b><bdi>KAB</bdi> (פצצה מונחית):</b> נפוצה בעיקר ליד קו החזית, לא באזור אומן.</li>
+        <li><b><bdi>MiG‑31K</bdi>:</b> מטוס שנושא טילי "קינז'אל". כשהוא ממריא, יש התרעה בכל הארץ.</li>
       </ul>
     </div>
   </details>
@@ -253,9 +253,9 @@
     recon:    { he: "רחפן צילום", icon: "◉" },
     missile:  { he: "טיל שיוט", icon: "➶" },
     ballistic:{ he: "טיל בליסטי", icon: "⇡" },
-    kab:      { he: "פצצה מונחית (KAB)", icon: "▼" },
-    mig31k:   { he: "MiG‑31K (קינז׳אל)", icon: "✈" },
-    fpv:      { he: "רחפן FPV", icon: "✦" },
+    kab:      { he: "פצצה מונחית (\u2068KAB\u2069)", icon: "▼" },
+    mig31k:   { he: "\u2068MiG‑31K\u2069 (קינז׳אל)", icon: "✈" },
+    fpv:      { he: "רחפן \u2068FPV\u2069", icon: "✦" },
     unknown:  { he: "מטרה לא מזוהה", icon: "?" }
   };
   // map / list symbols (24x24, nose pointing up)
@@ -439,7 +439,7 @@
     const big = (window.__allThreats || []).filter(t => ["missile","ballistic","mig31k"].includes(t.type) && t.status !== "stale");
     const nearActive = near.filter(n => !n.stale && !n.t.advisory);
     if (big.length) {
-      const names = { missile: "טילי שיוט", ballistic: "טיל בליסטי", mig31k: "המראת MiG‑31K (קינז׳אל)" };
+      const names = { missile: "טילי שיוט", ballistic: "טיל בליסטי", mig31k: "המראת \u2068MiG‑31K\u2069 (קינז׳אל)" };
       const kinds = [...new Set(big.map(t => names[t.type]))].join(", ");
       fw.hidden = false;
       fw.textContent = `🚀 איום טילים פעיל באוקראינה: ${kinds}. טילים מגיעים תוך דקות ולכן לא תמיד מופיעים ליד אומן. אם יש התרעה, הישארו במקום מוגן.`;
