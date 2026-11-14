@@ -559,12 +559,14 @@
   const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const android = /android/i.test(ua);
   const inApp = /FBAN|FBAV|Instagram|Line\/|WhatsApp|Telegram/i.test(ua);
-  if (fromShortcut || !(ios || android)) return;
+  if (fromShortcut) return;
   help.innerHTML = ios
     ? (inApp ? "קודם פתחו את הדף בספארי. אחר כך לחצו על כפתור השיתוף (ריבוע עם חץ למעלה) ובחרו <b>הוספה למסך הבית</b>."
              : "לחצו על כפתור השיתוף בתחתית המסך (ריבוע עם חץ למעלה), ובחרו <b>הוספה למסך הבית</b>.")
-    : (inApp ? "קודם פתחו את הדף בכרום (שלוש נקודות, <b>פתיחה בדפדפן</b>). אחר כך בתפריט של כרום בחרו <b>הוספה למסך הבית</b>."
-             : "בתפריט של הדפדפן (שלוש הנקודות למעלה) בחרו <b>הוספה למסך הבית</b>, ואז <b>הוספה</b>.");
+    : android
+    ? (inApp ? "קודם פתחו את הדף בכרום (שלוש נקודות, <b>פתיחה בדפדפן</b>). אחר כך בתפריט של כרום בחרו <b>הוספה למסך הבית</b>."
+             : "בתפריט של הדפדפן (שלוש הנקודות למעלה) בחרו <b>הוספה למסך הבית</b>, ואז <b>הוספה</b>.")
+    : "פתחו את האתר בטלפון. באנדרואיד: בתפריט של כרום (שלוש נקודות) בחרו <b>הוספה למסך הבית</b>. באייפון: בספארי לחצו על כפתור השיתוף ובחרו <b>הוספה למסך הבית</b>.";
   box.hidden = false;
   btn.addEventListener("click", () => { help.hidden = !help.hidden; });
 })();
