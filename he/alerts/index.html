@@ -433,7 +433,12 @@
 
   function renderList(near) {
     const box = $("list");
-    if (!near.length) { box.innerHTML = `<div class="empty">אין מטרות מדווחות ברדיוס של ${LIST_KM} ק״מ מאומן.</div>`; return; }
+    if (!near.length) {
+      const nf = window.__nearestFar;
+      const extra = nf ? `<br>הקרובה ביותר: ${esc(nf.lab.he)}, ${Math.round(nf.dist)} ק״מ ${compassAdj(nf.fromUman)} לאומן${nf.t.locality ? ", ליד " + esc(he(nf.t.locality)) : ""}. מטרות רחוקות מופיעות במפה כשמקטינים אותה.` : "";
+      box.innerHTML = `<div class="empty">אין מטרות מדווחות ברדיוס של ${LIST_KM} ק״מ מאומן.${extra}</div>`;
+      return;
+    }
     box.innerHTML = near.map(n => {
       const t = n.t, m = MOVE[n.areaOnly ? "unk" : n.move];
       const cnt = t.count > 1 ? ` × ${t.count}` : "";
@@ -532,11 +537,14 @@
       ]);
       const threats = (tr.threats || []).filter(t => t.status !== "resolved");
       window.__allThreats = threats;
-      const near = threats.map(analyse).filter(n => n.relevant)
+      const analysed = threats.map(analyse);
+      const near = analysed.filter(n => n.relevant)
         .sort((a, b) => (a.stale - b.stale) || (a.dist - b.dist));
+      const far = analysed.filter(n => !n.relevant && !n.areaOnly && isFinite(n.dist)).sort((a, b) => a.dist - b.dist);
+      window.__nearestFar = far[0] || null;
       renderStatus(ar, near);
       renderList(near);
-      renderMap(near);
+      renderMap(near.concat(far));
       renderStats(threats);
       lastOk = Date.now();
       setLive(true, "עודכן " + new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
