@@ -567,7 +567,7 @@
   const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const android = /android/i.test(ua);
   const inApp = /FBAN|FBAV|Instagram|Line\/|WhatsApp|Telegram/i.test(ua);
-  if (fromShortcut) return;
+  // always shown, also when opened from a home-screen icon
   help.innerHTML = ios
     ? (inApp ? "קודם פתחו את הדף בספארי. אחר כך לחצו על כפתור השיתוף (ריבוע עם חץ למעלה) ובחרו <b>הוספה למסך הבית</b>."
              : "לחצו על כפתור השיתוף בתחתית המסך (ריבוע עם חץ למעלה), ובחרו <b>הוספה למסך הבית</b>.")
