@@ -6,7 +6,7 @@
   "dir": "rtl",
   "start_url": "/he/alerts/?source=homescreen",
   "scope": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#0e1117",
   "theme_color": "#0e1117",
   "icons": [
